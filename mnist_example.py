@@ -27,20 +27,12 @@ class Net(nn.Module):
     def forward(self, h1):
     	h1 = h1.view(-1, 28*28)
     	h1 = F.relu(self.fc0(h1))
-    	h1 = F.dropout(h1, p=0.5, training=self.training)
     	h2 = F.relu(self.fc1(h1))
-    	h2 = F.dropout(h2, p=0.5, training=self.training)
     	h3 = self.fc2(h2)
     	return h3
 
 
 def main():
-	n_hidden = 1000
-#	n_feats = 4
-#	n_train = 5000
-#	n_test = 1000
-	train_range = [-1, 1]
-	test_range = [10, 20]
 	num_workers = 0
 	pruning_rounds = 1000
 	pruning_rate = 0.25
@@ -58,7 +50,7 @@ def main():
 	np.random.shuffle(indices)
 	
 	def stop_criterion(nz, n):
-		return nz < n*0.75
+		return nz < n*0.11
 
 	net = Net()
 	print(net)
@@ -112,6 +104,8 @@ def main():
 			break
 		last_nz = nz
 
+	val_losses = []
+
 	pruning.rewind(w_k)
 	train(net)
 
@@ -125,11 +119,13 @@ def main():
 		net.eval()
 		val_loss = 0.
 		correct = 0
+		
 		for x, y in test_loader:
-			y_hat = net(data)
+			y_hat = net(x)
+			x1 = x.view(-1)
 			val_loss += F.nll_loss(y_hat, y, size_average=False).item()
-			pred = y_hat.x.max(1, keepdim=True)[1]
-			correct += pred.eq(y.x.view_as(pred)).sum()
+			pred = y_hat.data.max(1, keepdim=True)[1]
+			correct += pred.eq(y.data.view_as(pred)).sum()
 		val_loss /= len(test_loader.dataset)
 		val_losses.append(val_loss)
 		print('\nTest set: Avg. loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
@@ -137,8 +133,7 @@ def main():
 		    100. * correct / len(test_loader.dataset)))
 
 #	validate()	
-	for epoch in range(1, n_epochs + 1):
-		validate(net)
+	validate(net)
 
 if __name__ == "__main__":
 	main()
