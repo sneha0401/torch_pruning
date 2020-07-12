@@ -7,9 +7,9 @@ def cut(pruning_rate, flat_params):
 	assert flat_params.dim() == 1
 	with torch.no_grad():
 		cutoff_index = round(pruning_rate * flat_params.size()[0])
-        values, __indices = torch.sort(torch.abs(flat_params))
-        cutoff = values[cutoff_index]
-    return cutoff
+		values, __indices = torch.sort(torch.abs(flat_params))
+		cutoff = values[cutoff_index]
+	return cutoff
 
 class MagnitudePruning():
 
@@ -54,8 +54,9 @@ class MagnitudePruning():
 
 		else: 
 			flat_params = torch.cat([p[m==1].view(-1) 
-									 for p, m in zip(self.params, self.masks)]) 
+									 for m, p in zip(self.masks, self.params)]) 
 			cutoff = cut(self.pruning_rate, flat_params)
+			
 			for i, (m, p) in enumerate(zip(self.masks, self.params)):
 				new_mask = torch.where(torch.abs(p) < cutoff,
 										torch.zeros_like(p), m)
@@ -63,7 +64,7 @@ class MagnitudePruning():
 
 	def zero_params(self, masks = None):
 		masks = masks if masks is not None else self.masks
-		for m, p in zip(self.masks, self.params):
+		for m, p in zip(masks, self.params):
 			p.data = m * p.data
 
 
