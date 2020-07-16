@@ -3,15 +3,13 @@ import torch.nn as nn
 from torch.autograd import Variable, Function
 import random
 #
-def randomarraygenerator(sparsity, self.masks):
-	seed(1)
-	max = int(sum(mask.view(-1).size(0) for mask in self.masks))
+def randomarraygenerator(sparsity, max):
 	num_sparsed_els = (sparsity/100)*max
 	return random.sample(range(0, (max-1)), num_sparsed_els)
-
+'''
 class LinearFunction(Function):
 	def forward():
-
+'''
 
 class SparseLinear(nn.Module):
 	def __init__(self, num_inputs, num_outputs, sparsity):
@@ -24,14 +22,14 @@ class SparseLinear(nn.Module):
 		self.weights = nn.Parameter()
 
 		masks = torch.zeros_like(weights.view(-1))
-		zero_indicies = randomarraygenerator(sparsity)
+		max = masks.size()[0]
+		zero_indicies = randomarraygenerator(sparsity, max)
 		for zi in zero_indicies:
-			m[zi] = 1
+			masks[zi] = 1
 		self.masks = torch.reshape(masks, weights.shape)
 
 	def numel(self):
 		return int(sum(mask.view(-1).size(0) for mask in self.masks))
 
 
-		
 
