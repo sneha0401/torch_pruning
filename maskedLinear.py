@@ -13,15 +13,13 @@ class LinearFunction(Function):
 
 class SparseLinear(nn.Module):
 	def __init__(self, num_inputs, num_outputs, sparsity):
-		super(SparseLinear, self).__init__()
+		super(SparseLinear, self).__init__() 
 		self.num_inputs = num_inputs
 		self.num_outputs = num_outputs
 		self.sparsity = sparsity
 		
 		device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-		net = nn.Sequential(nn.Linear(2, 2), nn.Linear(2, 2))
-		
-		self.weights = nn.Parameter()
+		self.weights = nn.Parameter(torch.Tensor(num_outputs, num_inputs))
 
 		masks = torch.zeros_like(self.weights.view(-1))
 		mask_els = masks.size()[0]
