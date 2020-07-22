@@ -2,19 +2,30 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable, Function
 import random
-#
+
 def randomarraygenerator(sparsity, mask_els):
-	num_sparsed_els = int((sparsity/100)*mask_els)
+	num_sparsed_els = int((1 - sparsity/100)*mask_els)
 	return random.sample(range(0, (mask_els-1)), num_sparsed_els)
-'''
+
 class LinearFunction(Function):
-	def __init__ (self, self.masks):
-		super(LinearFunction, self).__init__()
-		self.masks = self.masks
-	def forward(ctx, self, input, weight):
+
+	@staticmethod
+
+	def forward(ctx, input, weight, mask):
 		ctx.save_for_backward(input, weight)
-		output = input.mm(weight.mul_(self.mask.data).T)
-'''
+		
+		output = input.mm(weight.mul_(mask.data).T)
+		return output
+
+	@staticmethod
+
+	def backward(ctx, self, input, weight):
+		input, weight = ctx.saved_tensors
+		if ctx.needs_input_grad[0]:
+			grad_input = grad_output.mm(weight)
+		if ctx.needs_input_grad[1]:
+			grad_weight = grad_output.t().mm(input)
+		return grad_input, grad_weight
 
 class SparseLinear(nn.Module):
 	def __init__(self, num_inputs, num_outputs, sparsity):
@@ -38,5 +49,5 @@ class SparseLinear(nn.Module):
 		self.masks = nn.Parameter(masks)
 		self.masks.requires_grad = False
 
-	def numel(self):
-		return int(sum(mask.view(-1).size(0) for mask in self.masks))
+	def forward(self, input):
+		return LinearFunction.apply(input, self.weights, self.masks)
