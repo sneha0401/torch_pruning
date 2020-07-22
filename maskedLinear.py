@@ -8,15 +8,13 @@ def randomarraygenerator(sparsity, mask_els):
 	return random.sample(range(0, (mask_els-1)), num_sparsed_els)
 
 class LinearFunction(Function):
-	def __init__ (self, masks):
-		self.masks = masks
 
 	@staticmethod
 
-	def forward(ctx, self, input, weight):
+	def forward(ctx, input, weight, mask):
 		ctx.save_for_backward(input, weight)
 		
-		output = input.mm(weight.mul_(self.masks.data).T)
+		output = input.mm(weight.mul_(mask.data).T)
 		return output
 
 	@staticmethod
@@ -58,5 +56,5 @@ class SparseLinear(nn.Module):
 		self.masks.requires_grad = False
 
 	def forward(self, input):
-		return LinearFunction.apply(input, self.weights)
-		
+		return LinearFunction.apply(input, self.weights, self.masks)
+
