@@ -8,13 +8,15 @@ def randomarraygenerator(sparsity, mask_els):
 	return random.sample(range(0, (mask_els-1)), num_sparsed_els)
 
 class LinearFunction(Function):
+	def __init__ (self, masks):
+		self.masks = masks
 
 	@staticmethod
 
-	def forward(ctx, input, weight, mask):
+	def forward(ctx, self, input, weight):
 		ctx.save_for_backward(input, weight)
 		
-		output = input.mm(weight.mul_(mask.data).T)
+		output = input.mm(weight.mul_(self.masks.data).T)
 		return output
 
 	@staticmethod
@@ -29,7 +31,7 @@ class LinearFunction(Function):
 			grad_input = grad_output.mm(wt_copy)
 		if ctx.needs_input_grad[1]: 
 			grad_weight = grad_output.clone().t().mm(input)
-		grad_weight = grad_weight.mul_(mask)
+			grad_weight = grad_weight.mul_(mask)
 
 		return grad_input, grad_weight
 
@@ -43,7 +45,7 @@ class SparseLinear(nn.Module):
 		device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 		weights = torch.Tensor(num_outputs, num_inputs)
-		wetghts =  nn.init.xavier_normal(weights)
+		weights =  nn.init.xavier_normal(weights)
 		self.weights = nn.Parameter(weights)
 
 		masks = torch.zeros_like(self.weights.view(-1))
@@ -56,4 +58,5 @@ class SparseLinear(nn.Module):
 		self.masks.requires_grad = False
 
 	def forward(self, input):
-		return LinearFunction.apply(input, self.weights, self.masks)
+		return LinearFunction.apply(input, self.weights)
+		
