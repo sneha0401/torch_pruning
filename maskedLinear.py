@@ -19,12 +19,18 @@ class LinearFunction(Function):
 
 	@staticmethod
 
-	def backward(ctx, self, input, weight):
+	def backward(ctx, grad_output):
 		input, weight = ctx.saved_tensors
+
+		grad_input = grad_weight = None
+		cl_weight = weight.clone()
+		wt_copy = cl_weight.mul_(mask.data)
 		if ctx.needs_input_grad[0]:
-			grad_input = grad_output.mm(weight)
-		if ctx.needs_input_grad[1]:
-			grad_weight = grad_output.t().mm(input)
+			grad_input = grad_output.mm(wt_copy)
+		if ctx.needs_input_grad[1]: 
+			grad_weight = grad_output.clone().t().mm(input)
+		grad_weight = grad_weight.mul_(mask)
+
 		return grad_input, grad_weight
 
 class SparseLinear(nn.Module):
