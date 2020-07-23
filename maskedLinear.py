@@ -12,7 +12,7 @@ class LinearFunction(Function):
 	@staticmethod
 
 	def forward(ctx, input, weight, mask):
-		ctx.save_for_backward(input, weight)
+		ctx.save_for_backward(input, weight, mask)
 		
 		output = input.mm(weight.mul_(mask.data).T)
 		return output
@@ -20,7 +20,7 @@ class LinearFunction(Function):
 	@staticmethod
 
 	def backward(ctx, grad_output):
-		input, weight = ctx.saved_tensors
+		input, weight, mask = ctx.saved_tensors
 
 		grad_input = grad_weight = grad_mask = None
 		cl_weight = weight.clone()
@@ -30,6 +30,9 @@ class LinearFunction(Function):
 		if ctx.needs_input_grad[1]: 
 			grad_weight = grad_output.clone().t().mm(input)
 			grad_weight = grad_weight.mul_(mask)
+		if ctx.needs_input_grad[2]: 
+			grad_mask = None
+
 
 		return grad_input, grad_weight
 
