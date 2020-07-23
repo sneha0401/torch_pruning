@@ -22,7 +22,7 @@ class LinearFunction(Function):
 	def backward(ctx, grad_output):
 		input, weight = ctx.saved_tensors
 
-		grad_input = grad_weight = None
+		grad_input = grad_weight = grad_mask = None
 		cl_weight = weight.clone()
 		wt_copy = cl_weight.mul_(mask.data)
 		if ctx.needs_input_grad[0]:
